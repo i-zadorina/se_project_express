@@ -20,14 +20,16 @@ app.get('/crash-test', () => {
   }, 0);
 });
 
+app.get('/', (req, res) => res.send({ ok: true }));
+
 //  Import routes index
 const routes = require('./routes/index');
 
-const { PORT = 3001 } = process.env;
+const { PORT = 3002, MONGODB_URI } = process.env;
 
 //  Connect to database
 mongoose
-  .connect('mongodb://127.0.0.1:27017/wtwr_db')
+  .connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to DB');
   })
@@ -36,7 +38,13 @@ mongoose
 //  App's logic
 app.use(bodyParser.json());
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ['https://wtwr.net', 'https://www.wtwr.net'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
 app.use(limiter);
 app.use(requestLogger);
@@ -47,7 +55,6 @@ app.use(errorLogger); // enabling the error logger
 app.use(errors()); // celebrate error handler
 
 app.use(errorHandler); // centralized error handler
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

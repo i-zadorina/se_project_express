@@ -1,6 +1,6 @@
 # WTWR (What to Wear?): Back End
 
-Page: [https://wtwr.teachmetofish.net/]
+Page: [https://wtwr.net/]
 
 The back-end project is focused on creating a server for the WTWR application. I gained a deeper understanding of how to work with databases, set up security and testing, and deploy web applications on a remote machine. The eventual goal is to create a server with an API and user authorization.
 Front-end repo: [https://github.com/i-zadorina/se_project_react]

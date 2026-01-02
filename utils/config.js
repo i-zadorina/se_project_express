@@ -1,6 +1,7 @@
-const JWT_SECRET =
-  process.env.NODE_ENV === "production"
-    ? process.env.JWT_SECRET
-    : "Some_secret_key";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET is not defined');
+}
 
 module.exports = { JWT_SECRET };
