@@ -5,7 +5,10 @@ const Item = require('../models/clothingItem');
 mongoose.set('strictQuery', false);
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const BASE_URL = process.env.BASE_URL;
+const BASE_URL = (process.env.BASE_URL || '').replace(/\/+$/, '');
+
+if (!MONGODB_URI) throw new Error('MONGODB_URI is missing');
+if (!BASE_URL) throw new Error('BASE_URL is missing');
 
 const defaultItems = [
   { seedId: 'cap-hot', name: 'Cap', weather: 'hot', file: 'Cap.png' },
@@ -39,21 +42,22 @@ const defaultItems = [
   name: it.name,
   weather: it.weather,
   imageUrl: `${BASE_URL}/assets/default-items/${it.file}`,
+  isDefault: true,
 }));
 
 async function seed() {
   try {
     await mongoose.connect(MONGODB_URI);
 
+    await Item.deleteMany({
+      isDefault: true,
+      $or: [{ seedId: { $exists: false } }, { seedId: null }],
+    });
+
     for (const item of defaultItems) {
       await Item.updateOne(
         { seedId: item.seedId },
-        {
-          $setOnInsert: {
-            ...item,
-            isDefault: true,
-          },
-        },
+        { $set: item },
         { upsert: true }
       );
     }
