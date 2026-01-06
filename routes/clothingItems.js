@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const optionalAuth = require('../middlewares/optionalAuth');
 
 // Import controllers
 const {
@@ -17,8 +18,7 @@ const {
   validateItemId,
 } = require('../middlewares/validation');
 
-router.get('/', getItems);
-
+router.get('/', optionalAuth, getItems);
 router.use(auth);
 
 router.post('/', validateCreateItem, createItem);

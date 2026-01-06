@@ -5,7 +5,14 @@ const ForbiddenError = require('../utils/errors/ForbiddenError');
 const NotFoundError = require('../utils/errors/NotFoundError');
 
 const getItems = (req, res, next) => {
-  Item.find({})
+  const userId = req.user?._id;
+
+  const query = userId
+    ? { $or: [{ isDefault: true }, { owner: userId }] }
+    : { isDefault: true };
+
+  Item.find(query)
+    .sort({ createdAt: -1 })
     .then((items) => res.send(items))
     .catch(next);
 };
