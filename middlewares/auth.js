@@ -1,26 +1,22 @@
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require("../utils/config");
+const { JWT_SECRET } = require('../utils/config');
 const UnauthorizedError = require('../utils/errors/UnauthorizedError');
 
 const auth = (req, res, next) => {
   const { authorization } = req.headers;
 
-  if (authorization === "Bearer null" || !authorization.startsWith('Bearer ')) {
+  if (!authorization || !authorization.startsWith('Bearer ')) {
     throw new UnauthorizedError("User isn't logged in");
   }
 
   const token = authorization.replace('Bearer ', '');
-  let payload;
-
   try {
-    payload = jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
+    return next();
   } catch (err) {
-    throw new UnauthorizedError("Invalid token");
+    return next(new UnauthorizedError('Invalid token'));
   }
-
-  req.user = payload;
-
-  return next();
 };
 
-module.exports=auth;
+module.exports = auth;

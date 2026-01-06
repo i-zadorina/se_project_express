@@ -12,12 +12,15 @@ const getItems = (req, res, next) => {
 
 const createItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
+  console.log('createItem body:', req.body);
+  console.log('createItem user:', req.user);
 
   Item.create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => res.send({ data: item }))
     .catch((err) => {
       console.error(err);
       if (err.name === 'ValidationError') {
+        console.log('validation details:', err.errors);
         next(new BadRequestError({ message: errorMessage.validationError }));
       } else {
         next(err);

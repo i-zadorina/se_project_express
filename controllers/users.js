@@ -28,11 +28,11 @@ const createUser = (req, res, next) => {
       })
     )
     .catch((err) => {
-      console.error(err);
+      console.error('createUser error:', err);
       if (err.name === 'MongoServerError') {
         next(new ConflictError('User with this email already exists'));
       } else if (err.name === 'ValidationError') {
-        next(new BadRequestError('Invalid data'));
+        next(new BadRequestError(err.message));
       } else {
         next(err);
       }
