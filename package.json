@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "lint": "npx eslint .",
+    "seed:items": "node scripts/seedDefaultItems.js",
     "start": "node app.js",
     "dev": "nodemon app.js"
   },

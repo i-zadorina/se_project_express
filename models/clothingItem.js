@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const User = require("./user");
 
 const itemSchema = new mongoose.Schema({
   name: {
@@ -26,15 +25,18 @@ const itemSchema = new mongoose.Schema({
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: User,
-    required: true,
+    ref: 'user',
+    required: function () {
+      return !this.isDefault;
+    },
   },
-  likes:[
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: User,
-      default: [],
-    }],
+  likes: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'user',
+    default: [],
+  },
+  seedId: { type: String, unique: true, sparse: true },
+  isDefault: { type: Boolean, default: false },
   createdAt: {
     type: Date,
     default: Date.now,

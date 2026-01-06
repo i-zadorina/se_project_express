@@ -31,7 +31,10 @@ const deleteItem = (req, res, next) => {
   Item.findById(itemId)
     .orFail()
     .then((item) => {
-      if (item.owner.toString() !== userId) {
+      if (item.isDefault) {
+        throw new ForbiddenError('Default items cannot be deleted');
+      }
+      if (!item.owner || item.owner.toString() !== userId) {
         throw new ForbiddenError('This user is not the owner of the item');
       }
       return Item.findByIdAndRemove(itemId);
@@ -53,7 +56,11 @@ const updateItem = (req, res, next) => {
   const { itemId } = req.params;
   const { imageUrl } = req.body;
 
-  Item.findByIdAndUpdate(itemId, { $set: { imageUrl } })
+  Item.findByIdAndUpdate(
+    itemId,
+    { $set: { imageUrl } },
+    { new: true, runValidators: true }
+  )
     .orFail()
     .then((item) => res.send({ data: item }))
     .catch((err) => {

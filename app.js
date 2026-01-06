@@ -40,11 +40,13 @@ app.use(bodyParser.json());
 
 app.use(
   cors({
-    origin: ['https://wtwr.net', 'https://www.wtwr.net'],
+    origin: ['https://wtwr.net', 'https://www.wtwr.net','http://localhost:3000'],
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
+app.options('*', cors());
 
 app.use(limiter);
 app.use(requestLogger);
