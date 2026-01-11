@@ -17,9 +17,17 @@ const {
 // Import 404 error
 const NotFoundError = require('../utils/errors/NotFoundError');
 
+// Upload avatar
+const { uploadAvatar } = require('../middlewares/upload');
+router.post(
+  '/signup',
+  uploadAvatar.single('avatar'),
+  validateCreateUser,
+  createUser
+);
+
 // For known endpoints
 router.post('/signin', validateLogin, login);
-router.post('/signup', validateCreateUser, createUser);
 
 router.use('/items', itemRouter);
 router.use('/users', userRouter);

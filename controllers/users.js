@@ -14,29 +14,98 @@ const NotFoundError = require('../utils/errors/NotFoundError');
 const UnauthorizedError = require('../utils/errors/UnauthorizedError');
 const ConflictError = require('../utils/errors/ConflictError');
 
-const createUser = (req, res, next) => {
-  const { name, avatar, email, password } = req.body;
+const path = require('path');
+const fs = require('fs/promises');
+const sharp = require('sharp');
 
-  bcrypt
-    .hash(password, 10)
-    .then((hash) => User.create({ name, avatar, email, password: hash }))
-    .then((user) =>
-      res.send({
-        name: user.name,
-        avatar: user.avatar,
-        email: user.email,
-      })
-    )
-    .catch((err) => {
-      console.error('createUser error:', err);
-      if (err.name === 'MongoServerError') {
-        next(new ConflictError('User with this email already exists'));
-      } else if (err.name === 'ValidationError') {
-        next(new BadRequestError(err.message));
-      } else {
-        next(err);
-      }
+const BASE_URL = (process.env.BASE_URL || '').replace(/\/+$/, '');
+
+async function saveAvatarLocal(userId, buffer) {
+  const outDir = path.join(__dirname, '..', 'public', 'assets', 'avatars');
+  await fs.mkdir(outDir, { recursive: true });
+
+  const fileName = `${userId}.webp`;
+  const outPath = path.join(outDir, fileName);
+
+  const out = await sharp(buffer)
+    .rotate()
+    .resize(256, 256, { fit: 'cover' })
+    .webp({ quality: 75 })
+    .toBuffer();
+
+  await fs.writeFile(outPath, out);
+
+  return `${BASE_URL}/assets/avatars/${fileName}?v=${Date.now()}`;
+}
+
+const uploadAvatar = async (req, res, next) => {
+  try {
+    if (!req.file?.buffer) {
+      throw new BadRequestError('No file buffer');
+    }
+
+    const outDir = path.join(__dirname, '..', 'public', 'assets', 'avatars');
+    await fs.mkdir(outDir, { recursive: true });
+
+    const fileName = `${req.user._id}.webp`;
+    const outPath = path.join(outDir, fileName);
+
+    const out = await sharp(req.file.buffer)
+      .rotate()
+      .resize(256, 256, { fit: 'cover' })
+      .webp({ quality: 75 })
+      .toBuffer();
+
+    await fs.writeFile(outPath, out);
+
+    const avatarUrl = await saveAvatarLocal(req.user._id, req.file.buffer);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar: avatarUrl },
+      { new: true }
+    );
+
+    return res.send({ data: updatedUser });
+  } catch (err) {
+    console.error('UPLOAD AVATAR ERROR:', err);
+    return next(err);
+  }
+};
+
+const createUser = async (req, res, next) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!password) throw new BadRequestError('Invalid data');
+
+    const hash = await bcrypt.hash(password, 10);
+
+    let user = await User.create({ name, email, password: hash });
+
+    if (req.file?.buffer) {
+      const avatarUrl = await saveAvatarLocal(user._id, req.file.buffer);
+      user = await User.findByIdAndUpdate(
+        user._id,
+        { avatar: avatarUrl },
+        { new: true }
+      );
+    }
+
+    return res.send({
+      name: user.name,
+      avatar: user.avatar,
+      email: user.email,
     });
+  } catch (err) {
+    if (err.name === 'MongoServerError') {
+      next(new ConflictError('User with this email already exists'));
+    } else if (err.name === 'ValidationError') {
+      next(new BadRequestError(err.message));
+    } else {
+      next(err);
+    }
+  }
 };
 
 const login = (req, res, next) => {
@@ -83,7 +152,7 @@ const getCurrentUser = (req, res, next) => {
 const updateUser = (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,
-    { name: req.body.name, avatar: req.body.avatar },
+    { name: req.body.name },
     {
       new: true,
       runValidators: true,
@@ -95,7 +164,7 @@ const updateUser = (req, res, next) => {
       console.error(err);
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         next(new BadRequestError({ message: errorMessage.validationError }));
-      } else if (err.name === 'DocumentNotFoundError') {
+      } else if (err.message === 'DocumentNotFoundError') {
         next(new NotFoundError({ message: errorMessage.NotFoundError }));
       } else {
         next(err);
@@ -130,6 +199,7 @@ const unhideDefaultItem = (req, res, next) => {
 module.exports = {
   getCurrentUser,
   updateUser,
+  uploadAvatar,
   createUser,
   login,
   hideDefaultItem,
