@@ -12,6 +12,8 @@ if (!BASE_URL) throw new Error('BASE_URL is missing');
 
 const defaultItems = [
   { seedId: 'cap-hot', name: 'Cap', weather: 'hot', file: 'Cap.png' },
+  { seedId: 'boot-hot', name: 'Boot', weather: 'cold', file: 'Boot.png' },
+  { seedId: 'scarf-hot', name: 'Scarf', weather: 'cold', file: 'Scarf.png' },
   {
     seedId: 'hoodie-warm',
     name: 'Hoodie',

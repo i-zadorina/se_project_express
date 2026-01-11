@@ -55,7 +55,14 @@ app.options('*', cors());
 
 app.use(limiter);
 app.use(requestLogger);
-app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
+app.use(
+  '/assets',
+  express.static(path.join(__dirname, 'public/assets'), {
+    maxAge: '365d',
+    immutable: true,
+  })
+);
+
 app.use('/', routes);
 
 app.use(errorLogger); // enabling the error logger
